@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"database/sql"
 	"github.com/jmoiron/sqlx"
 	"my-todo/database"
 	"my-todo/database/dbHelper"
@@ -87,4 +88,20 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	}{
 		Token: sessionToken,
 	})
+}
+
+func GetUserBySession(sessionToken string) (*models.User, error) {
+	//language="SQL"
+	SQL := `SELECT u.id, u.name, u.email, u.created_at FROM users u 
+			INNER JOIN user_session us on u.id = us.user_id
+			WHERE us.session_token= $1`
+	var user models.User
+	err := database.Todo.Get(&user, SQL, sessionToken)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, err
+	}
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	return &user, nil
 }
