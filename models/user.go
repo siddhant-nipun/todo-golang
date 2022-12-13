@@ -13,3 +13,13 @@ type User struct {
 	Email     string    `json:"email" db:"email"`
 	CreatedAt time.Time `json:"createdAt" db:"created_at"`
 }
+
+type RegisterRequest struct {
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type TokenID struct {
+	Token string `json:"token"`
+}

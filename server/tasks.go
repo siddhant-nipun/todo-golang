@@ -8,6 +8,8 @@ import (
 func taskRoutes(r chi.Router) {
 	r.Group(func(task chi.Router) {
 		task.Post("/", handler.CreateTask)
-		//task.Get("/", handler.GetTasks)
+		task.Get("/", handler.GetTasks)
+		task.Put("/", handler.UpdateTask)
+		task.Delete("/", handler.DeleteTask)
 	})
 }

@@ -58,3 +58,10 @@ func CreateUserSession(db sqlx.Ext, userID, sessionToken string) error {
 	_, err := db.Exec(SQL, userID, sessionToken)
 	return err
 }
+
+func DeleteUserSession(token string) error {
+	//language=SQL
+	SQL := `DELETE FROM user_session WHERE session_token=$1`
+	_, err := database.Todo.Exec(SQL, token)
+	return err
+}

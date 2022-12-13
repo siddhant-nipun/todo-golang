@@ -32,6 +32,7 @@ func SetupRoutes() *Server {
 		api.Route("/", func(public chi.Router) {
 			public.Post("/register", handler.RegisterUser)
 			public.Post("/login", handler.LoginUser)
+			public.Delete("/logout", handler.LogoutUser)
 		})
 		api.Route("/task", func(task chi.Router) {
 			task.Group(taskRoutes)

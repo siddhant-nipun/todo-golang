@@ -3,6 +3,7 @@ package handler
 import (
 	"database/sql"
 	"github.com/jmoiron/sqlx"
+	"github.com/sirupsen/logrus"
 	"my-todo/database"
 	"my-todo/database/dbHelper"
 	"my-todo/models"
@@ -13,11 +14,7 @@ import (
 
 // RegisterUser to register a user
 func RegisterUser(w http.ResponseWriter, r *http.Request) {
-	body := struct {
-		Name     string `json:"name"`
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}{}
+	body := models.RegisterRequest{}
 	if parseErr := utils.ParseBody(r.Body, &body); parseErr != nil {
 		utils.RespondError(w, http.StatusBadRequest, parseErr, "failed to parse request body")
 		return
@@ -57,9 +54,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		utils.RespondError(w, http.StatusInternalServerError, txErr, "failed to create user")
 		return
 	}
-	utils.RespondJSON(w, http.StatusCreated, struct {
-		Token string `json:"token"`
-	}{
+	utils.RespondJSON(w, http.StatusCreated, models.TokenID{
 		Token: sessionToken,
 	})
 }
@@ -83,9 +78,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		utils.RespondError(w, http.StatusInternalServerError, nil, "failed to create user session")
 		return
 	}
-	utils.RespondJSON(w, http.StatusOK, struct {
-		Token string `json:"token"`
-	}{
+	utils.RespondJSON(w, http.StatusOK, models.TokenID{
 		Token: sessionToken,
 	})
 }
@@ -104,4 +97,19 @@ func GetUserBySession(sessionToken string) (*models.User, error) {
 		return nil, nil
 	}
 	return &user, nil
+}
+
+func LogoutUser(w http.ResponseWriter, r *http.Request) {
+	token := r.Header.Get("x-api-key")
+	user, err := GetUserBySession(token)
+	if err != nil || user == nil {
+		logrus.WithError(err).Errorf("failed to get user with token: %s", token)
+		utils.RespondError(w, http.StatusUnauthorized, err, "not authorized")
+		return
+	}
+	if err := dbHelper.DeleteUserSession(token); err != nil {
+		utils.RespondError(w, http.StatusInternalServerError, err, "failed to logout user")
+		return
+	}
+	w.WriteHeader(http.StatusAccepted)
 }
