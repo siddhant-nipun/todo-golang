@@ -2,9 +2,9 @@ package handler
 
 import (
 	"github.com/jmoiron/sqlx"
-	"github.com/sirupsen/logrus"
 	"my-todo/database"
 	"my-todo/database/dbHelper"
+	"my-todo/middlewares"
 	"my-todo/models"
 	"my-todo/utils"
 	"net/http"
@@ -14,21 +14,10 @@ import (
 func CreateTask(w http.ResponseWriter, r *http.Request) {
 
 	body := models.CreateUserTask{}
-	apiKey := r.Header.Get("x-api-key")
-	user, err := GetUserBySession(apiKey)
-	if err != nil || user == nil {
-		logrus.WithError(err).Errorf("failed to get user with token: %s", apiKey)
-		utils.RespondError(w, http.StatusUnauthorized, err, "not authorized")
-		return
-	}
+	user := middlewares.UserContext(r)
 
 	if parseErr := utils.ParseBody(r.Body, &body); parseErr != nil {
 		utils.RespondError(w, http.StatusBadRequest, parseErr, "failed to parse request body")
-		return
-	}
-
-	if err != nil || user == nil {
-		utils.RespondError(w, http.StatusUnauthorized, err, "invalid token")
 		return
 	}
 	var (
@@ -55,13 +44,7 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetTasks(w http.ResponseWriter, r *http.Request) {
-	apiKey := r.Header.Get("x-api-key")
-	user, err := GetUserBySession(apiKey)
-	if err != nil || user == nil {
-		logrus.WithError(err).Errorf("failed to get user with token: %s", apiKey)
-		utils.RespondError(w, http.StatusUnauthorized, err, "not authorized")
-		return
-	}
+	user := middlewares.UserContext(r)
 	var userTasks []models.UserTask
 	txErr := database.Tx(func(tx *sqlx.Tx) error {
 		var saveErr error
@@ -86,13 +69,7 @@ func GetTasks(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateTask(w http.ResponseWriter, r *http.Request) {
-	apiKey := r.Header.Get("x-api-key")
-	user, err := GetUserBySession(apiKey)
-	if err != nil || user == nil {
-		logrus.WithError(err).Errorf("failed to get user with token: %s", apiKey)
-		utils.RespondError(w, http.StatusUnauthorized, err, "not authorized")
-		return
-	}
+	user := middlewares.UserContext(r)
 	body := models.UpdateUserTask{}
 
 	if err := utils.ParseBody(r.Body, &body); err != nil {
@@ -119,13 +96,14 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteTask(w http.ResponseWriter, r *http.Request) {
-	apiKey := r.Header.Get("x-api-key")
-	user, err := GetUserBySession(apiKey)
-	if err != nil || user == nil {
-		logrus.WithError(err).Errorf("failed to get user with token: %s", apiKey)
-		utils.RespondError(w, http.StatusUnauthorized, err, "not authorized")
-		return
-	}
+	//apiKey := r.Header.Get("x-api-key")
+	//user, err := dbHelper.GetUserBySession(apiKey)
+	//if err != nil || user == nil {
+	//	logrus.WithError(err).Errorf("failed to get user with token: %s", apiKey)
+	//	utils.RespondError(w, http.StatusUnauthorized, err, "not authorized")
+	//	return
+	//}
+	user := middlewares.UserContext(r)
 	body := models.UserTaskId{}
 
 	if err := utils.ParseBody(r.Body, &body); err != nil {

@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"database/sql"
 	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
 	"my-todo/database"
@@ -83,25 +82,9 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func GetUserBySession(sessionToken string) (*models.User, error) {
-	//language="SQL"
-	SQL := `SELECT u.id, u.name, u.email, u.created_at FROM users u 
-			INNER JOIN user_session us on u.id = us.user_id
-			WHERE us.session_token= $1`
-	var user models.User
-	err := database.Todo.Get(&user, SQL, sessionToken)
-	if err != nil && err != sql.ErrNoRows {
-		return nil, err
-	}
-	if err == sql.ErrNoRows {
-		return nil, nil
-	}
-	return &user, nil
-}
-
 func LogoutUser(w http.ResponseWriter, r *http.Request) {
 	token := r.Header.Get("x-api-key")
-	user, err := GetUserBySession(token)
+	user, err := dbHelper.GetUserBySession(token)
 	if err != nil || user == nil {
 		logrus.WithError(err).Errorf("failed to get user with token: %s", token)
 		utils.RespondError(w, http.StatusUnauthorized, err, "not authorized")

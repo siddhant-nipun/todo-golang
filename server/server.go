@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/go-chi/chi/v5"
 	"my-todo/handler"
+	"my-todo/middlewares"
 	"my-todo/utils"
 	"net/http"
 	"time"
@@ -24,6 +25,7 @@ const (
 func SetupRoutes() *Server {
 	router := chi.NewRouter()
 	router.Route("/api", func(api chi.Router) {
+		api.Use(middlewares.CommonMiddlewares()...)
 		api.Get("/health", func(writer http.ResponseWriter, request *http.Request) {
 			utils.RespondJSON(writer, http.StatusOK, struct {
 				Status string `json:"status"`
@@ -35,6 +37,7 @@ func SetupRoutes() *Server {
 			public.Delete("/logout", handler.LogoutUser)
 		})
 		api.Route("/task", func(task chi.Router) {
+			task.Use(middlewares.AuthMiddleware)
 			task.Group(taskRoutes)
 		})
 	})
